@@ -16,6 +16,8 @@
  */
 package com.viewpagerindicator;
 
+import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 import android.content.Context;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -26,9 +28,6 @@ import android.view.ViewGroup;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-
-import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
-import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 
 /**
  * This widget implements the dynamic action bar tab behavior that can change
@@ -164,24 +163,48 @@ public class TabPageIndicator extends HorizontalScrollView implements PageIndica
     }
 
     @Override
-    public void onPageScrollStateChanged(int arg0) {
+    public void onPageScrollStateChanged(int state) {
         if (mListener != null) {
-            mListener.onPageScrollStateChanged(arg0);
+            mListener.onPageScrollStateChanged(state);
         }
     }
 
     @Override
-    public void onPageScrolled(int arg0, float arg1, int arg2) {
+    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+    	updateSelector(position, positionOffset);    	
+    	
         if (mListener != null) {
-            mListener.onPageScrolled(arg0, arg1, arg2);
+            mListener.onPageScrolled(position, positionOffset, positionOffsetPixels);
         }
     }
+    
+	@Override
+	protected void onLayout(boolean changed, int l, int t, int r, int b) {
+		super.onLayout(changed, l, t, r, b);
+		updateSelector(mSelectedTabIndex, 0);
+	}
+
+	private void updateSelector(int position, float positionOffset) {
+		View page = mTabLayout.getChildAt(position);
+    	View pageNext = mTabLayout.getChildAt(position+1);
+
+    	if (page != null) {
+	    	int width = pageNext != null ? (int) (page.getWidth()*(1-positionOffset) + pageNext.getWidth()*positionOffset) : page.getWidth();
+	    	int height = page.getHeight();
+	    	int left = pageNext != null ? (int) (page.getLeft()*(1-positionOffset) + pageNext.getLeft()*positionOffset) : page.getLeft();
+	    	
+	    	mTabLayout.moveSelector(left, width, height);
+    	} else {
+    		mTabLayout.moveSelector(0, 0, 0);
+    	}
+	}
 
     @Override
-    public void onPageSelected(int arg0) {
-        setCurrentItem(arg0);
+    public void onPageSelected(int position) {
+        setCurrentItem(position);
         if (mListener != null) {
-            mListener.onPageSelected(arg0);
+            mListener.onPageSelected(position);
         }
     }
 

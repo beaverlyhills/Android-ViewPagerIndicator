@@ -16,13 +16,15 @@ import android.widget.LinearLayout;
  */
 class IcsLinearLayout extends LinearLayout {
     private static final int[] LL = new int[] {
-        /* 0 */ android.R.attr.divider,
-        /* 1 */ android.R.attr.showDividers,
-        /* 2 */ android.R.attr.dividerPadding,
+        /* 0 */ android.R.attr.src,
+        /* 1 */ android.R.attr.divider,
+        /* 2 */ android.R.attr.showDividers,
+        /* 3 */ android.R.attr.dividerPadding,
     };
-    private static final int LL_DIVIDER = 0;
-    private static final int LL_SHOW_DIVIDER = 1;
-    private static final int LL_DIVIDER_PADDING = 2;
+    private static final int LL_SRC = 0;
+    private static final int LL_DIVIDER = 1;
+    private static final int LL_SHOW_DIVIDER = 2;
+    private static final int LL_DIVIDER_PADDING = 3;
 
     private Drawable mDivider;
     private int mDividerWidth;
@@ -30,6 +32,10 @@ class IcsLinearLayout extends LinearLayout {
     private int mShowDividers;
     private int mDividerPadding;
 
+    int mSelectorWidth;
+    int mSelectorHeight;
+    int mSelectorLeft;
+    Drawable mSelectorDrawable;
 
     public IcsLinearLayout(Context context, int themeAttr) {
         super(context);
@@ -38,6 +44,10 @@ class IcsLinearLayout extends LinearLayout {
         setDividerDrawable(a.getDrawable(IcsLinearLayout.LL_DIVIDER));
         mDividerPadding = a.getDimensionPixelSize(LL_DIVIDER_PADDING, 0);
         mShowDividers = a.getInteger(LL_SHOW_DIVIDER, SHOW_DIVIDER_NONE);
+        mSelectorDrawable = a.getDrawable(LL_SRC);
+        if (mSelectorDrawable != null) {
+        	setWillNotDraw(false);
+        }
         a.recycle();
     }
 
@@ -179,4 +189,22 @@ class IcsLinearLayout extends LinearLayout {
         }
         return false;
     }
+    
+	@Override
+	protected void dispatchDraw(Canvas canvas) {
+		super.dispatchDraw(canvas);
+		if (mSelectorDrawable != null) {
+			mSelectorDrawable.setBounds(mSelectorLeft, 0, mSelectorLeft+mSelectorWidth, mSelectorHeight);
+			mSelectorDrawable.draw(canvas);
+		}
+	}
+
+	public void moveSelector(int left, int width, int height) {
+		if (mSelectorDrawable != null) {
+			this.mSelectorLeft = left;
+			this.mSelectorWidth = width;
+			this.mSelectorHeight = height;
+			invalidate();
+		}
+	}
 }
