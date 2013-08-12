@@ -72,6 +72,9 @@ public class TabPageIndicator extends HorizontalScrollView implements PageIndica
     private int mSelectedTabIndex;
 
     private OnTabReselectedListener mTabReselectedListener;
+    
+    private boolean mLimitTabWidth = true;
+    private boolean mIsDragging = false;
 
     public TabPageIndicator(Context context) {
         this(context, null);
@@ -96,9 +99,9 @@ public class TabPageIndicator extends HorizontalScrollView implements PageIndica
         setFillViewport(lockedExpanded);
 
         final int childCount = mTabLayout.getChildCount();
-        if (childCount > 1 && (widthMode == MeasureSpec.EXACTLY || widthMode == MeasureSpec.AT_MOST)) {
+        if (mLimitTabWidth && childCount > 1 && (widthMode == MeasureSpec.EXACTLY || widthMode == MeasureSpec.AT_MOST)) {
             if (childCount > 2) {
-                mMaxTabWidth = (int)(MeasureSpec.getSize(widthMeasureSpec) * 0.6f);
+                mMaxTabWidth = (int)(MeasureSpec.getSize(widthMeasureSpec) * 0.4f);
             } else {
                 mMaxTabWidth = MeasureSpec.getSize(widthMeasureSpec) / 2;
             }
@@ -162,8 +165,17 @@ public class TabPageIndicator extends HorizontalScrollView implements PageIndica
         mTabLayout.addView(tabView, new LinearLayout.LayoutParams(WRAP_CONTENT, MATCH_PARENT, 1));
     }
 
+	@Override
+	protected void onLayout(boolean changed, int l, int t, int r, int b) {
+		super.onLayout(changed, l, t, r, b);
+		if (!mIsDragging) {
+			updateSelector(mSelectedTabIndex, 0);
+		}
+	}
+
     @Override
     public void onPageScrollStateChanged(int state) {
+    	mIsDragging = state != ViewPager.SCROLL_STATE_IDLE;
         if (mListener != null) {
             mListener.onPageScrollStateChanged(state);
         }
@@ -172,18 +184,20 @@ public class TabPageIndicator extends HorizontalScrollView implements PageIndica
     @Override
     public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
 
-    	updateSelector(position, positionOffset);    	
+    	updateSelector(position, positionOffset);
     	
         if (mListener != null) {
             mListener.onPageScrolled(position, positionOffset, positionOffsetPixels);
         }
     }
     
-	@Override
-	protected void onLayout(boolean changed, int l, int t, int r, int b) {
-		super.onLayout(changed, l, t, r, b);
-		updateSelector(mSelectedTabIndex, 0);
-	}
+    @Override
+    public void onPageSelected(int position) {
+        setCurrentItem(position);
+        if (mListener != null) {
+            mListener.onPageSelected(position);
+        }
+    }
 
 	private void updateSelector(int position, float positionOffset) {
 		View page = mTabLayout.getChildAt(position);
@@ -199,14 +213,6 @@ public class TabPageIndicator extends HorizontalScrollView implements PageIndica
     		mTabLayout.moveSelector(0, 0, 0);
     	}
 	}
-
-    @Override
-    public void onPageSelected(int position) {
-        setCurrentItem(position);
-        if (mListener != null) {
-            mListener.onPageSelected(position);
-        }
-    }
 
     @Override
     public void setViewPager(ViewPager view) {
@@ -281,7 +287,11 @@ public class TabPageIndicator extends HorizontalScrollView implements PageIndica
         mListener = listener;
     }
 
-    private class TabView extends TextView {
+	public void setLimitTabWidth(boolean limitTabWidth) {
+		this.mLimitTabWidth = limitTabWidth;
+	}
+
+	private class TabView extends TextView {
         private int mIndex;
 
         public TabView(Context context) {
